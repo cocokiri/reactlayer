@@ -14,6 +14,9 @@ let appId = window.layerSample.appId;
 let client = new Client({
   appId: appId
 });
+window.layerSample.myClient = client;
+
+// console.log(window.layerSample.myClient === client, "ASDS");
 
 /**
  * Client authentication challenge.
@@ -22,19 +25,24 @@ let client = new Client({
  * See http://static.layer.com/sdk/docs/#!/api/layer.Client-event-challenge
  */
 client.on('challenge', e => {
+  console.log(e);
+  console.log("CHALLENDGEDFE")
   window.layerSample.getIdentityToken(e.nonce, e.callback);
 });
 
 client.on('ready', () => {
+  console.log("IM READY BITCH")
   store.dispatch(ownerSet(client.user.toObject()));
 });
 
 window.layerSample.onLogin(() => {
+  client.connect() //"de14b061-c976-478b-87df-c97e49a025de"
   /**
    * Start authentication
    */
-  client.connect();
 });
+
+
 
 /**
  * Share the client with the middleware layer

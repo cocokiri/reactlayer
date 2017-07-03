@@ -42,9 +42,10 @@
             model: layer.Query.Identity
           });
           identityQuery.on('change:data', function() {
-            if (identityQuery.data.length === 0) {
-              alert("There are no other users to talk to; please use your Identity Server to register new users");
-            } else {
+            // if (identityQuery.data.length === 0) {
+            //   alert("There are no other users to talk to; please use your Identity Server to register new users");
+            // } else {
+              console.log(client, client.createConversation, "CLIENT")
               var conversation = client.createConversation({
                 participants: identityQuery.data.map(function(user) {
                   return user.id;
@@ -54,37 +55,33 @@
                 }
               });
               conversation.createMessage("Welcome to the new Conversation").send();
-            }
+            // }
           });
         }
       });
     },
     getIdentityToken: function(nonce, callback) {
-      layer.xhr({
-        url: window.layerSample.identityProviderUrl,
-        headers: {
-          'Content-type': 'application/json',
-          'Accept': 'application/json'
-        },
-        method: 'POST',
-        data: {
-          nonce: nonce,
-          email: window.layerSample.email,
-          password: window.layerSample.password
-        }
-      }, function(res) {
-        if (res.success && res.data.identity_token) {
-          console.log('challenge: ok');
+        let headers = {
+            'Authorization': 'Bearer ' + accessTok,
+            'content-type': 'application/json'
+        };
 
-          callback(res.data.identity_token);
-
-          // Cleanup identity dialog
-          var node = window.document && document.getElementById('identity');
-          if (node) node.parentNode.removeChild(node);
-        } else {
-          alert('Login failed; please check your user id and password');
-        }
-      });
+        fetch('https://backend-staging.airy.co/communication/layer-identity-token?nonce=' + nonce, {
+            method: 'GET',
+            mode: 'cors',
+            headers: headers
+        })
+            .then(res => {
+                if (res.status === 201 || res.ok) {
+                    return res.json()
+                }
+            }).then((response) => {
+            identityToken = response.token;
+            var node = window.document && document.getElementById('identity');
+            if (node) node.parentNode.removeChild(node);
+            console.log(response.token, '<<<--identityToken')
+            callback(response.token)
+        });
     },
     dateFormat: function(date) {
       var now = new Date();
@@ -120,15 +117,151 @@ window.document && document.addEventListener('DOMContentLoaded', function() {
   document.body.insertBefore(container, document.querySelectorAll('.main-app')[0]);
 
   function submit() {
-    window.layerSample.email = document.getElementById('email').value;
-    window.layerSample.password = document.getElementById('password').value;
-    if (window.layerSample.email && window.layerSample.password) {
-      window.layerSample.loginCallback(window.layerSample.userId);
-    } else {
-      alert("Please fill in an email address and password");
-    }
+      sendToServer()
+      window.layerSample.myClient.connect('de14b061-c976-478b-87df-c97e49a025de'); //""
+
+
+      /*   window.layerSample.email = 'lukas@airy.co';
+         window.layerSample.password = 'hallo123';
+         if (window.layerSample.email && window.layerSample.password) {
+           window.layerSample.loginCallback(window.layerSample.userId);
+         } else {
+           alert("Please fill in an email address and password");
+         }*/
   }
 
   button.addEventListener('click', submit);
-  form.addEventListener('submit', submit);
+  // form.addEventListener('submit', submit);
 });
+
+
+
+let identityToken;
+let sessionTok;
+let organizationID;
+let accessTok;
+let memberId;
+
+
+
+function sendToServer() {
+    let data = {
+        'email': 'lukas@airy.co',
+        'password': 'hallo123'
+    };
+
+    let headers = {
+        'Authorization': 'Bearer client_key',
+        'content-type': 'application/json'
+    };
+
+    fetch('https://backend-staging.airy.co/identity/log-in/', { //beim server ==> die API route muss d'accord sein
+        method: 'POST',
+        headers: headers,
+        mode: 'cors',
+        body: JSON.stringify(data)
+    }).then(res => {
+            if (res.status === 200 || res.ok) {
+                return res.json()
+            }
+        }
+    )
+        .catch((error) => {
+            console.log(error)
+
+        })
+        .then(response => {
+            console.log(response)
+            accessTok = response.accessToken;
+            memberId = response.member.id;
+            console.log(memberId)
+            console.log(window.layerSample.myClient, "SI HERE")
+            // getNonce()
+            // window.layerSample.myClient.connect("de14b061-c976-478b-87df-c97e49a025de");
+
+        })
+
+}
+
+function getNonce() {
+    let headers = {
+        "accept": "application/vnd.layer+json; version=2.0",
+        "Content-Type": "application/json"
+    }
+    fetch('https://api.layer.com/nonces', {
+        method: "POST",
+        headers: headers
+    })
+        .then(res => {
+            console.log(res, 'res outside if in getNonce')
+            if (res.status === 201 || res.ok) {
+                return res.json()
+            }
+        }).then((response) => {
+        console.log(response.nonce, '<<<--Nonce')
+        getIdentityToken(response.nonce);
+    })
+
+}
+
+
+// function getIdentityToken(nonce) {
+//     let headers = {
+//         'Authorization': 'Bearer ' + accessTok,
+//         'content-type': 'application/json'
+//     };
+//
+//     fetch('https://backend-staging.airy.co/communication/layer-identity-token?nonce=' + nonce, {
+//         method: 'GET',
+//         mode: 'cors',
+//         headers: headers
+//     })
+//         .then(res => {
+//             if (res.status === 201 || res.ok) {
+//                 return res.json()
+//             }
+//         }).then((response) => {
+//       console.log(response, "RESPONSEOSOOEOE")
+//         identityToken = response.token;
+//         console.log(response.token, '<<<--identityToken')
+//         getSessionToken(response.token)
+//     });
+// }
+
+
+
+function getSessionToken(identityToken) {
+    let headers = {
+        "accept": "application/vnd.layer+json; version=2.0",
+        "Content-Type": "application/json"
+    }
+    let data = {
+        identity_token: identityToken,
+        app_id: "4dc3c5e2-79bc-11e6-bae2-181cf8060647"
+    }
+    fetch('https://api.layer.com/sessions', {
+        method: "POST",
+        headers: headers,
+        mode: 'cors',
+        body: JSON.stringify(data)
+
+    }).then(res => {
+        return res.json()
+
+    }).then((response) => {
+        sessionTok = response.session_token;
+        console.log(sessionTok, '<<<--Sessiontoken')
+        // let sessionToken = response.session_token;
+        // this.props.layerSessionTokenCreated(sessionToken);
+        // browserHistory.push('/layerHome')
+        console.log(memberId, '<====== MEMBERID');
+        // console.log(window.layerSample.myClient, window.layerSample.myClient.connectWithSession, "<----myCleint")
+        // window.layerSample.myClient.connectWithSession("de14b061-c976-478b-87df-c97e49a025de", sessionTok);
+
+        // client.connectWithSession(memberId, sessionTok);
+        window.layerSample.validateSetup(window.layerSample.myClient);
+        console.log('asdsas', "<<<-Store");
+
+    })
+};
+
