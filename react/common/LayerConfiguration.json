@@ -1,0 +1,7 @@
+[
+    {
+        "name": "NewApplication",
+        "app_id": "layer:///apps/staging/4dc3c5e2-79bc-11e6-bae2-181cf8060647",
+        "identity_provider_url": "https://backend-staging.airy.co/communication/layer-identity-token"
+    }
+]

@@ -1,9 +1,0 @@
-<div ng-controller="conversationCtrl">
-  <div ng-include="'src/partials/conversation-header.html'"></div>
-  <!-- Demonstrates configuring widgets using ng-app-id and ng-query-id; can also use ng-client and ng-query -->
-  <layer-conversation-panel
-    ng-delete-message-enabled="true"
-    ng-app-id="appCtrlState.client.appId"
-    ng-conversation-id="chatCtrlState.currentConversation.id"
-    ng-compose-buttons="composeButtons"></layer-conversation-panel>
-</div>

@@ -1,8 +1,0 @@
-<layer-presence ng-item='appCtrlState.client.user' ng-presence-click='togglePresence'></layer-presence>
-<div class="title">{{appCtrlState.client.user.displayName}}'s Conversations</div>
-<a class='announcements-button {{chatCtrlState.unreadAnnouncements ? "unread-announcements" : ""}}' ng-click='chatCtrlState.showAnnouncements = true'>
-  <i class="icon fa fa-bullhorn"></i>
-</a>
-<a ng-click='showNewConversation()' class='create-conversation'>
-  <i class="icon fa fa-pencil-square-o"></i>
-</a>
